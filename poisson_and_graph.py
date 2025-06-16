@@ -26,6 +26,21 @@ plt.grid(axis='y', linestyle='--', alpha=0.6)
 plt.tight_layout()
 plt.show()
 
+location_index = {
+    "twilight": 0,
+    "athletic_complex": 1,
+    "student_center": 2,
+    "kinney_drugs": 3,
+    "food_coop": 4,
+    "hannaford": 5,
+    "porter_hospital": 6,
+    "amtrak_station": 7,
+    "bihall": 8,
+    "bus_stop": 9
+}
+
+index_location = {v: k for k, v in location_index.items()}
+
 matrix = [[0, 11, 11, 6, 6, 13, 6, 10, 8, 7],
     [7, 0, 6, 4, 8, 9, 5, 6, 3, 4],
     [11, 7, 0, 5, 10, 12, 7, 9, 4, 4],
@@ -43,11 +58,13 @@ returns: map with hubs as nodes and edges as bike time between nodes (minutes)
 """
 def create_graph(matrix):
     num_hubs = len(matrix)
-    map = nx.DiGraph()
+    graph = nx.DiGraph()
     for i in range(num_hubs):
-        map.add_node(i)
+        graph.add_node(index_location[i])
     for i in range(num_hubs):
         for j in range(num_hubs):
             if i != j:
-                map.add_edge(i, j, time=matrix[i][j]) 
-    return map
+                from_hub = index_location[i]
+                to_hub = index_location[j]
+                graph.add_edge(from_hub, to_hub, time=matrix[i][j]) 
+    return graph

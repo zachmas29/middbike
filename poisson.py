@@ -72,9 +72,9 @@ def best_time_frames(hourly_usage: List[int], poisson_dist: np.ndarray)-> List[s
 
 
 if __name__ == "__main__":
-    hourly_usage = [5, 4, 4, 5, 5, 3, 5, 4, 6, 7, 2, 5,
-                    5, 6, 4, 6, 6, 1, 7, 2, 11, 4, 3, 8]
-    expected_rides_per_hour = 48
+    hourly_usage = [0, 1, 1, 1, 2, 3, 3, 5, 8, 8, 6, 5,
+                    9, 6, 4, 6, 7, 8, 7, 5, 4, 4, 3, 2]
+    expected_rides_per_hour = 55
     poisson_dist = poisson(expected_rides_per_hour, hourly_usage)
     sorted_best_times = best_time_frames(hourly_usage, poisson_dist)
     print("poisson_dist:", poisson_dist)

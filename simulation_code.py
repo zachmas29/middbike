@@ -14,7 +14,7 @@ def build_complete_digraph(travel_time: np.ndarray) -> nx.DiGraph:
     Returns:
     G - complete digraph G populated based on data provided
     """
-    n = travel_time.shape[0] # should be 11, since the matrix [11, 11][0] = 11
+    n = travel_time.shape[0] # should be 10, since the matrix [10, 10][0] = 10
     G = nx.complete_graph(n, create_using = nx.DiGraph)
     for u, v in G.edges: # for edge uv, the label time = travel_time[u, v]
         G.edges[u, v]["time"] = int(travel_time[u, v])

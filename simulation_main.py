@@ -1,8 +1,11 @@
+from __future__ import annotations
 import numpy as np
+from typing import Dict, List, Tuple
 import poisson as ps
 import simulation_code as sim
 
-TRAVEL_TIME = [[0, 11, 11, 6, 6, 13, 6, 10, 8, 7],
+TRAVEL_TIME = np.array(
+    [[0, 11, 11, 6, 6, 13, 6, 10, 8, 7],
     [7, 0, 6, 4, 8, 9, 5, 6, 3, 4],
     [11, 7, 0, 5, 10, 12, 7, 9, 4, 4],
     [5, 5, 5, 0, 6, 9, 3, 6, 3, 1],
@@ -12,6 +15,7 @@ TRAVEL_TIME = [[0, 11, 11, 6, 6, 13, 6, 10, 8, 7],
     [8, 6, 9, 5, 9, 7, 6, 0, 6, 6],
     [6, 5, 3, 2, 7, 9, 4, 5, 0, 1],
     [5, 5, 5, 1, 6, 9, 3, 6, 2, 0]]
+)
 
-def simulation_main():
+def build_distribution():
     pass

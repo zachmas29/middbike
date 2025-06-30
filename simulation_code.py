@@ -32,9 +32,9 @@ def simulation(
 ) -> Tuple[np.ndarray, np.ndarray, List[Request]]:
     """
     Parameters:
-    G - K_11 generated from data
+    G - K_10 generated from data
     distribution - 24-element np.ndarray hourly rental requests at each hub
-    possibilities - 11-element destination probabilities for each hub, [origin][origin] must be 0.0
+    possibilities - 10-element destination probabilities for each hub, [origin][origin] must be 0.0
     keyword args - must be passed with name
         max_bikes_per_hub - 10
         initial_bikes_per_hub - 5 for simplicity 

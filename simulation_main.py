@@ -33,18 +33,7 @@ def build_distributions(
 ) -> Tuple[Dict[int, np.ndarray], Dict[int, np.ndarray]]:
     distributions: Dict[int, np.ndarray] = {}
     timestamps: Dict[int, np.ndarray] = {}
-    for hub, lam_hour in enumerate(expected_rides_per_hour):
-        base = hourly_usage_arrays[hub].astype(float)
-        shape = base / base.sum()                     
-        hourly_lam = lam_hour * shape                
-        rate_fn = nhp.rate_from_hourly_profile(hourly_lam, max_rate = 55)
-
-        ev_times = nhp.nonhomogenous_poisson(rate_fn, T=24, rng=rng)
-        counts   = nhp.bin_events_by_hour(ev_times, T=24).astype(int)
-
-        distributions[hub] = counts
-        timestamps[hub]    = ev_times
-    return distributions, timestamps
+    pass
     
 def run_simulation(
     expected_per_hour: List[int],

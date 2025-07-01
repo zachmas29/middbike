@@ -27,48 +27,47 @@ def build_dest_probs(num_hubs: int = 10) -> Dict[int, List[float]]:
     return probs
 
 def build_distributions(
-    expected_rides_per_hour: List[int],
-    hourly_usage_arrays: List[np.ndarray],
-    rng: np.random.Generator
-) -> Tuple[Dict[int, np.ndarray], Dict[int, np.ndarray]]:
-    distributions: Dict[int, np.ndarray] = {}
+    hourly_usage: np.ndarray[np.ndarray[int]],
+    T: float,
+    max_rate: int, 
+    num_hubs: int) -> Tuple[Dict[int, np.ndarray], Dict[int, np.ndarray]]:
+
+    poisson: Dict[int, np.ndarray] = {}
     timestamps: Dict[int, np.ndarray] = {}
-    pass
+    for hub in range(num_hubs):
+        rate_function = nhp.rate_from_hourly_profile(hourly_usage[hub], max_rate)
+        distributions = nhp.nonhomogenous_poisson(T, max_rate, rate_function)
+        poisson[hub] = nhp.bin_events_by_hour(distributions)
+        timestamps[hub] = distributions
+    return poisson, timestamps
     
 def run_simulation(
-    expected_per_hour: List[int],
-    hourly_usage_array: List[np.ndarray],
+    hourly_usage_arrays: np.ndarray[np.ndarray[int]],
+    probs: Dict[int, np.ndarray[float]],
     *,
+    T: float = 24,
+    max_rate: int = 55,
+    num_hubs: int = 10,
     seed: int = 42
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> None:
     rng = np.random.default_rng(seed)
 
-    dist, event_times = build_distributions(expected_per_hour, hourly_usage_array, rng)
-
+    system_distribution = build_distributions(hourly_usage_arrays, T, max_rate, num_hubs)
     G = build_complete_digraph(travel_time)
-    dest_probs = build_dest_probs()
-
-    no_bike, no_park, _ = simulation(
-        G, dist, dest_probs, max_bikes_per_hub = 10, initial_bikes_per_hub = 5, rng = rng
-    )
-
-    print("Hourly no-bike events: ", no_bike)
-    print("Hourly no-parking events: ", no_park)
-    print("Totals -> no-bike: ", no_bike.sum())
-    print("Totals -> no-bike: ", no_park.sum())
-    print("Sample events times from Hub 0: ", np.round(event_times[0][:10], 2))
-
-    return no_bike, no_park
+    res = simulation(G, system_distribution[0], probs, rng = rng)
+    print(f"no bike events: {res[0]}")
+    print(f"no parking events: {res[1]}")
+    print(f"timestamps: {system_distribution[1]}")
 
 if __name__ == "__main__":
     num_hubs = 10
 
     base_usage = np.array([0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
-        1, 0, 3, 1, 1, 1, 6, 7, 0, 1, 1, 0], dtype = float)
+        1, 0, 3, 1, 1, 1, 6, 7, 0, 1, 1, 0], dtype = int)
     hourly_usage_arrays = [base_usage.copy() for _ in range(num_hubs)]
 
-    expected_per_hour = [3] * num_hubs
+    dest_probs = build_dest_probs(num_hubs)
+    run_simulation(hourly_usage_arrays, dest_probs)
 
-    run_simulation(expected_per_hour, hourly_usage_arrays)
 
     

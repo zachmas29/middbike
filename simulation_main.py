@@ -46,7 +46,7 @@ def run_simulation(
     probs: Dict[int, np.ndarray[float]],
     *,
     T: float = 24,
-    max_rate: int = 55,
+    max_rate: int = 5,
     num_hubs: int = 10,
     seed: int = 42
 ) -> None:

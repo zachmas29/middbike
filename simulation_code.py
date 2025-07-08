@@ -26,6 +26,7 @@ def simulation(
         distribution: Dict[int, np.ndarray],
         possibilities: Dict[int, List[float]],
         *,
+        T: int,
         max_bikes_per_hub: int = 10,
         initial_bikes_per_hub: int = 5,
         rng: np.random.Generator | None = None,
@@ -66,10 +67,10 @@ def simulation(
     # trips currently on the road, each element (minutes_remaining, destination_hub)
     in_transit: List[Request] = []
 
-    no_bike_events = np.zeros(24, dtype = int) # sum of no-bike events, each hour of the day
-    no_parking_events = np.zeros(24, dtype = int) # sum of no-parking events, each hour of the day
+    no_bike_events = np.zeros(T, dtype = int) # sum of no-bike events, each hour of the day
+    no_parking_events = np.zeros(T, dtype = int) # sum of no-parking events, each hour of the day
 
-    for hour in range(24):
+    for hour in range(T):
 
         # for simplicity, advance all in-transit bikes by 60 mins
         # dock whose remaining time has hit zero or below

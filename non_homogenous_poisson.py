@@ -47,7 +47,7 @@ def nonhomogenous_poisson(total_hours: float, max_rate: float, rate_function) ->
     return events
 
 
-def bin_events_by_hour(event_times: List[float]) -> NDArray[np.int_]:
+def bin_events_by_hour(event_times: List[float], T: int) -> NDArray[np.int_]:
     """
     Bins continuous-time events into hourly counts.
     params:
@@ -55,7 +55,7 @@ def bin_events_by_hour(event_times: List[float]) -> NDArray[np.int_]:
     returns:
         hourly_bins: slots of hours on the clock, each with the number of requests that happened within that hour
     """
-    hourly_bins = np.zeros(24, dtype=int)
+    hourly_bins = np.zeros(T, dtype=int)
     for time in event_times:
         hour = int(time % 24) #find hour of event in the day
         hourly_bins[hour] += 1 #adds a recorded event to each hour slot
@@ -80,16 +80,17 @@ def plot_poisson(hourly_bins: NDArray[np.int_]) -> None:
 
 
 if __name__ == "__main__":
-    hourly_requests = [5, 4, 4, 5, 5, 3, 5, 4, 6, 7, 2, 5,
-                    5, 6, 4, 6, 6, 1, 7, 2, 11, 4, 3, 8]
+    hourly_requests = [0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
+        1, 0, 3, 1, 1, 1, 5, 5, 0, 1, 1, 0, 0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
+        1, 0, 3, 1, 1, 1, 5, 5, 0, 1, 1, 0]
 
-    total_simulation_hours = 24
-    max_hourly_rate = 100
+    total_simulation_hours = 48
+    max_hourly_rate = 5
 
     rate_function = rate_from_hourly_profile(hourly_requests, max_hourly_rate)
     print(str(rate_function))
     simulated_events = nonhomogenous_poisson(total_simulation_hours, max_hourly_rate, rate_function)
     print("Distribution:",simulated_events)
-    hourly_bins = bin_events_by_hour(simulated_events)
+    hourly_bins = bin_events_by_hour(simulated_events, total_simulation_hours)
     print(hourly_bins)
     # plot_poisson(hourly_bins)

@@ -28,7 +28,7 @@ def build_dest_probs(num_hubs: int = 10) -> Dict[int, List[float]]:
 
 def build_distributions(
     hourly_usage: np.ndarray[np.ndarray[int]],
-    T: float,
+    T: int,
     max_rate: int, 
     num_hubs: int) -> Tuple[Dict[int, np.ndarray], Dict[int, np.ndarray]]:
 
@@ -37,7 +37,7 @@ def build_distributions(
     for hub in range(num_hubs):
         rate_function = nhp.rate_from_hourly_profile(hourly_usage[hub], max_rate)
         distributions = nhp.nonhomogenous_poisson(T, max_rate, rate_function)
-        poisson[hub] = nhp.bin_events_by_hour(distributions)
+        poisson[hub] = nhp.bin_events_by_hour(distributions, T)
         timestamps[hub] = distributions
     return poisson, timestamps
     
@@ -54,7 +54,7 @@ def run_simulation(
 
     system_distribution = build_distributions(hourly_usage_arrays, T, max_rate, num_hubs)
     G = build_complete_digraph(travel_time)
-    res = simulation(G, system_distribution[0], probs, rng = rng)
+    res = simulation(G, system_distribution[0], probs, T = T, rng = rng)
     print(f"no bike events: {res[0]}")
     print(f"no parking events: {res[1]}")
     print(f"timestamps: {system_distribution[1]}")
@@ -63,11 +63,14 @@ if __name__ == "__main__":
     num_hubs = 10
 
     base_usage = np.array([0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
-        1, 0, 3, 1, 1, 1, 6, 7, 0, 1, 1, 0], dtype = int)
+    1, 0, 3, 1, 1, 1, 5, 5, 0, 1, 1, 0, 0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
+    1, 0, 3, 1, 1, 1, 5, 5, 0, 1, 1, 0, 0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
+    1, 0, 3, 1, 1, 1, 5, 5, 0, 1, 1, 0, 0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
+    1, 0, 3, 1, 1, 1, 5, 5, 0, 1, 1, 0, 0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
+    1, 0, 3, 1, 1, 1, 5, 5, 0, 1, 1, 0, 0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
+    1, 0, 3, 1, 1, 1, 5, 5, 0, 1, 1, 0, 0, 2, 0, 0, 0, 3, 3, 3, 2, 2, 2, 1,
+    1, 0, 3, 1, 1, 1, 5, 5, 0, 1, 1, 0], dtype = int)
     hourly_usage_arrays = [base_usage.copy() for _ in range(num_hubs)]
 
     dest_probs = build_dest_probs(num_hubs)
-    run_simulation(hourly_usage_arrays, dest_probs)
-
-
-    
+    run_simulation(hourly_usage_arrays, dest_probs, T = 168, max_rate = 10)

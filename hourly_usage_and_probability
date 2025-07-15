@@ -1,0 +1,51 @@
+import numpy as np
+
+#estimate how many people at time t will use a bike at a hub
+#add num_available as a parameter
+def estimate_bike_usage(size_dictionary, hub, t, max_rate):
+    if t >= 12 or t <= 5:
+        p = .1 #percent of student who use bikes (change based on survey data)
+        average_rate = 4
+    else:
+        p = .02
+        average_rate = 2
+    potential_riders = size_dictionary[hub][t] * p
+    bikes_in_use = min(potential_riders, max_rate) #replaced num available with max rate WARNING
+    usage_rate = bikes_in_use/max_rate
+    return usage_rate * max_rate * average_rate  #replaced num available with max rate WARNING
+
+
+#find a way to incorporate num available?
+def create_hourly_usage_per_hub(size_dictionary, max_rate):
+    hourly_usage_per_hub = {}
+    for hub, week in size_dictionary.items():
+        hourly_usage_per_hub[hub] = {}
+        for day, hours in week.items():
+            hourly_usage_per_hub[hub][day] = {}
+            for hour, count in hours.items():
+                hourly_usage_per_hub[hub][day][hour] = estimate_bike_usage(size_dictionary, hub, hour, max_rate)
+
+    
+#extract size variable used for probability utility function
+def extract_size(size_dictionary, hub, day, t):
+    
+    hour = str(hour) 
+    size = size_dictionary[hub][day][hour]
+    return size
+
+#utility helper function to calculate the usefulness of each route
+def utility(source, destination, size_dictionary, day, hour, beta1, beta2, lnSize, elevation_matrix, travel_matrix):
+    travel_time = travel_matrix[source][destination]
+    size = extract_size(size_dictionary, destination, day, hour)
+    other = elevation_matrix[source][destination]
+    return beta1 * travel_time + beta2 * other + lnSize * size
+
+#calculate the probability of choosing destination based on source
+def probability(source, destination, size_dictionary, day, hour, beta1, beta2, lnSize, elevation_matrix, travel_matrix, hubs):
+    util = utility(source, destination, size_dictionary, day, hour, beta1, beta2, lnSize, elevation_matrix, travel_matrix)
+    utility_sum = 0
+    for k in hubs:
+        utility_sum += np.exp(utility(source, k, size_dictionary, day, hour, beta1, beta2, lnSize, elevation_matrix, travel_matrix))
+    numerator = np.exp(util)
+    denominator = utility_sum
+    return numerator / denominator

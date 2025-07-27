@@ -41,15 +41,15 @@ class Request:
     
     @minutes_left.setter
     def minutes_left(self, value: int) -> None:
-        self._minutes_left
+        self._minutes_left = value
     
     @property
     def success(self) -> bool:
-        return self.success
+        return self._success
     
     @success.setter
     def success(self, value: bool) -> None:
-        return self._success
+        self._success = value
     
     # stringify
     def __repr__(self) -> str:

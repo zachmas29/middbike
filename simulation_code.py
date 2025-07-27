@@ -1,92 +1,106 @@
 from __future__ import annotations
-import random
 import numpy as np
 import networkx as nx
-import hourly_usage_and_probability as pr
 from typing import Dict, List, Tuple
 from request import Request
 
-def build_complete_digraph(travel_time, size_dictionary):
+def build_complete_digraph(travel_time: np.ndarray) -> nx.DiGraph:
     """
-    Build a complete digraph using only the hubs in size_dictionary.
-    Each edge's 'time' attribute holds one-way travel time in minutes.
-
+    Build a complete digraph whose edge attribute 'time' holds one-way travel
+    time in minutes. 
+    ----------------
     Parameters:
-    travel_time - 2D array where [i, j] represents the travel time in minutes from i to j
-    size_dictionary - dictionary of active hubs (e.g., {'0': ..., '2': ..., '8': ...})
+    travel_time - [i, j] represents the travel time in mins from i to j
 
     Returns:
-    G - directed graph with only relevant hubs and correct travel times
+    G - complete digraph G populated based on data provided
     """
-    hub_ids = sorted(int(h) for h in size_dictionary.keys())  # get numeric hub IDs
-    G = nx.DiGraph()
-    G.add_nodes_from(hub_ids)
-
-    for u in hub_ids:
-        for v in hub_ids:
-            if u != v:
-                G.add_edge(u, v, time=int(travel_time[u][v]))
+    n = travel_time.shape[0] # should be 10, since the matrix [10, 10][0] = 10
+    G = nx.complete_graph(n, create_using = nx.DiGraph)
+    for u, v in G.edges: # for edge uv, the label time = travel_time[u, v]
+        G.edges[u, v]["time"] = int(travel_time[u, v])
     return G
 
 def simulation(
-        G,
-        distribution,  # expects { "0": array([...]), "2": array([...]), ... }
+        G: nx.DiGraph,
+        distribution: Dict[int, np.ndarray],
+        possibilities: Dict[int, List[float]],
         *,
-        day,
-        T,
-        max_bikes_per_hub=10,
-        initial_bikes_per_hub=5,
-        rng=None,
-        size_dictionary=None,
-        elevation_matrix=None,
-        travel_matrix=None,
-):
+        max_bikes_per_hub: int = 10,
+        initial_bikes_per_hub: int = 5,
+        rng: np.random.Generator | None = None,
+) -> Tuple[np.ndarray, np.ndarray, List[Request]]:
+    """
+    Parameters:
+    G - K_11 generated from data
+    distribution - 24-element np.ndarray hourly rental requests at each hub
+    possibilities - 11-element destination probabilities for each hub, [origin][origin] must be 0.0
+    keyword args - must be passed with name
+        max_bikes_per_hub - 10
+        initial_bikes_per_hub - 5 for simplicity 
+        rng - NumPy generator for reproducibility
+
+    Returns:
+    no_bike_events - 24-element np.ndarray representing the no. of no-bike events every hour in the system
+    no_parking_events - 24-element np.ndarray representing the no. of no-space events every hour in the system
+
+    """
+    
+    # initialize NumPy random number generator
     if rng is None:
         rng = np.random.default_rng()
 
-    hub_list = sorted(int(h) for h in size_dictionary.keys())
-    hub_to_index = {hub: idx for idx, hub in enumerate(hub_list)}
-    index_to_hub = {idx: hub for hub, idx in hub_to_index.items()}
+    num_hubs = G.number_of_nodes()
 
-    bike_stock = np.full(len(hub_list), initial_bikes_per_hub, dtype=int)
-
-    req_pool = {}
-    all_requests = []
-    for hub_str in size_dictionary.keys():
-        hub = int(hub_str)
-        n_req = int(distribution[hub_str].sum())
+    # pre-build request objects
+    req_pool: Dict[int, List[Request]] = {}
+    all_requests: List[Request] = []
+    for hub in range(num_hubs):
+        n_req = int(distribution[hub].sum())
         bag = [Request() for _ in range(n_req)]
         req_pool[hub] = bag
+        all_requests.extend(bag)
     
-    in_transit = []
+    bike_stock = np.full(num_hubs, initial_bikes_per_hub, dtype = int) # 10-element array, no. of bikes at each hub
+    
+    # trips currently on the road, each element (minutes_remaining, destination_hub)
+    in_transit: List[Request] = []
 
-    no_bike_events = np.zeros(T, dtype=int)
-    no_parking_events = np.zeros(T, dtype=int)
+    no_bike_events = np.zeros(24, dtype = int) # sum of no-bike events, each hour of the day
+    no_parking_events = np.zeros(24, dtype = int) # sum of no-parking events, each hour of the day
 
-    for hour in range(T):
-        on_road = []
+    for hour in range(24):
 
+        # for simplicity, advance all in-transit bikes by 60 mins
+        # dock whose remaining time has hit zero or below
+        # on_road: array of requests still riding after the current hour is processed
+        on_road: List[Request] = []
+        
         for req in in_transit:
             req.minutes_left -= 60
+
             if req.minutes_left > 0:
                 on_road.append(req)
                 continue
 
             dest = req.dest
-            if bike_stock[hub_to_index[dest]] < max_bikes_per_hub:
-                bike_stock[hub_to_index[dest]] += 1
+            
+            # attempt to dock a bike at dest
+            if bike_stock[dest] < max_bikes_per_hub:
+                bike_stock[dest] += 1
                 continue
-
+                
             no_parking_events[hour] += 1
+
             candidate = None
-            for offset in range(1, len(hub_list)):
+            for offset in range(1, num_hubs):
                 for new_hub in (dest - offset, dest + offset):
-                    if new_hub in hub_to_index:
+                    if 0 <= new_hub < num_hubs:
                         candidate = new_hub
                         break
                 if candidate is not None:
                     break
-
+            
             if candidate is None:
                 req.minutes_left = 60
                 on_road.append(req)
@@ -96,52 +110,32 @@ def simulation(
             req.dest = candidate
             req.minutes_left = extra_time
             on_road.append(req)
-
+                    
         in_transit = on_road
 
-        for hub_str in size_dictionary.keys():
-            hub = int(hub_str)
-            for _ in range(int(distribution[hub_str][hour])):
+        # process rental requests that occur during this hour
+        for hub in range(num_hubs):
+            for _ in range(int(distribution[hub][hour])):
                 req = req_pool[hub].pop() if req_pool[hub] else Request()
                 all_requests.append(req)
                 req.origin = hub
 
-                if bike_stock[hub_to_index[hub]] == 0:
+                # attempt to rent at hub
+                if bike_stock[hub] == 0: # if no bike left
                     no_bike_events[hour] += 1
                     req.success = False
                     continue
 
-                bike_stock[hub_to_index[hub]] -= 1
-
-                probs = []
-                destinations = [d for d in size_dictionary.keys() if d != hub_str]
-                probs = []
-                for dest in destinations:
-                    p = pr.probability(str(hub), dest, size_dictionary, day, str(hour),
-                    beta1=0.04, beta2=0.05, lnSize=11,
-                    elevation_matrix=elevation_matrix,
-                    travel_matrix=travel_matrix)
-                    probs.append(p)
-
-                probs = np.array(probs)
-                probs = probs / probs.sum() if probs.sum() > 0 else np.ones_like(probs) / len(probs)
-                dest_str = random.choices(destinations, weights=probs, k=1)[0]
-                dest = int(dest_str)
-
-                dest_str = random.choices(destinations, weights = probs,k=1)[0]
-                dest = int(dest_str)
-
-                prob_selected = probs[destinations.index(dest_str)]
-                print(f"Hour {hour}: Source {hub} → Dest {dest} (P={prob_selected:.4f})")
-
-                if hub in G.nodes and dest in G.nodes and G.has_edge(hub, dest):
-                    req.minutes_left = int(G.edges[hub, dest]["time"])
-                else:
-                    req.minutes_left = 999
-
+                # successful checkout
+                bike_stock[hub] -= 1
+                dest = rng.choice(num_hubs, p=possibilities[hub]) # assign destination based on probability array
                 req.dest = dest
+                #trip duration from edge attribute in G
+                req.minutes_left = int(G.edges[hub, dest]["time"])
                 req.success = True
                 in_transit.append(req)
+    
 
     return no_bike_events, no_parking_events, all_requests
 
+    

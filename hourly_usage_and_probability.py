@@ -1,24 +1,20 @@
 import numpy as np
-from size_dictionary import size_dictionary
-from travel_matrix import travel_time
-from elevation_matrix import elevation_matrix
+from constants import size_dictionary
+from constants import travel_time
+from constants import elevation_matrix
 import random
 
-#extract size variable used for probability utility function
 def extract_size(size_dictionary, hub, day, t):
     hour = str(t)
     hub = str(hub)
     day = str(day)
     
-    #navigate through nested dictionary structure
     hub_data = size_dictionary.get(hub, {})
     day_data = hub_data.get(day, {})
     size = day_data.get(hour,0)
 
     return size
 
-
-#utility helper function to calculate the usefulness of each route
 def utility(source, destination, size_dictionary, day, hour, beta1, beta2, lnSize, elevation_matrix, travel_matrix):
     travel_time = travel_matrix[int(source)][int(destination)]
     elevation = elevation_matrix[int(source)][int(destination)]
@@ -27,7 +23,7 @@ def utility(source, destination, size_dictionary, day, hour, beta1, beta2, lnSiz
     size = size/1000
     return -beta1 * travel_time - beta2 * elevation + lnSize * np.log(size)
 
-#calculate the probability of choosing destination based on source
+
 def probability(source, destination, size_dictionary, day, hour, beta1, beta2, lnSize, elevation_matrix, travel_matrix):
     util = utility(source, destination, size_dictionary, day, hour, beta1, beta2, lnSize, elevation_matrix, travel_matrix)
     utility_sum = 0
@@ -40,7 +36,7 @@ def probability(source, destination, size_dictionary, day, hour, beta1, beta2, l
 
 if __name__ == "__main__":
     source = '0'
-    destination = '1'
+    destination = '3'
     day = 'T'
     hour = '11'
     beta1 = .04

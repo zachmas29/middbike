@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Dict, Sequence
+from testdata import population_distribution
 
 def hourly_lambdas(
     population_distribution: Dict[int, Dict[int, np.ndarray]],
@@ -53,3 +54,6 @@ def hourly_lambdas(
             lambdas[hub_id][day] = lam_vec
 
     return lambdas
+
+if __name__ == "__main__":
+    print(hourly_lambdas(population_distribution, 0.15)[0][0])

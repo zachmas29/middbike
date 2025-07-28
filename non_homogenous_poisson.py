@@ -1,5 +1,7 @@
 import numpy as np
 from typing import Sequence
+from hourly_lambdas import hourly_lambdas
+from testdata import population_distribution
 
 def nhpp(
     hourly_lambdas: Sequence[int],
@@ -49,3 +51,6 @@ def nhpp(
         t += rng.exponential(1 / lam_max)      # next candidate
 
     return np.asarray(events)
+
+if __name__ == "__main__":
+    print(nhpp(hourly_lambdas(population_distribution, 0.15)[1][1]))

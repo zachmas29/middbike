@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from simulation_main import run_simulation
+from simulation_main_obsolete import run_simulation
 import hourly_usage_data as hud
 
 def run_batch_simulation(iterations=1000, day='M', T=24, max_rate=5):

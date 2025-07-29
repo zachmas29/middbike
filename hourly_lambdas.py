@@ -1,59 +1,81 @@
 import numpy as np
-from typing import Dict, Sequence
+from typing import Dict
 from testdata import population_distribution
+import json
+
 
 def hourly_lambdas(
-    population_distribution: Dict[int, Dict[int, np.ndarray]],
-    prob: float
-) -> Dict[int, Dict[int, np.ndarray]]:
+    population_distribution: Dict[int, Dict[str, Dict[str, int]]],
+    prob: float,
+    cap: int = 5
+) -> Dict[int, Dict[str, Dict[str, int]]]:
     """
     Convert a nested population distribution into hourly integer lambdas
-    for every hub and day of the week.
+    for every hub and weekday.
 
-    Parameters
-    ----------
-    population_distribution : Dict[int -> Dict[int -> np.ndarray]]
-        Outer keys 0-9  : hub IDs
-        Inner keys 0-6  : day of week (Mon = 0 ,... ,Sun = 6)
-        Leaf value      : 24-element 1-D array with the number of students
-                          present each hour (index 0 = 00:00-01:00, ..., 23 = 23:00-24:00).
-    prob : float
-        Per-student trip probability (0 < prob <= 1).  Each hourly λ is
-        calculated as population * prob
-
-    Returns
-    -------
-    Dict[int -> Dict[int -> np.ndarray]]
-        Same key structure, but each leaf array contains integer
-        hourly Poisson intensities (lambdas)
-
-    Raises
-    ------
-    ValueError
-        If `prob` is not in the (0, 1] interval or a leaf array is not
-        exactly length 24.
+    param:
+        population_distribution : Dict[int -> Dict[str -> Dict[str -> int]]]
+            Outer keys: hub IDs (0-9)
+            Middle keys: day of week ("M", "T", "W", "R", "F")
+            Inner dict: hour as string ("0" to "23"), value = population count
+        prob : float
+            Per-student trip probability (0 < prob <= 1).
+        cap : int
+            Maximum allowed lambda value. Default is 5.
+    returns:
+        Dict[int -> Dict[str -> Dict[str -> int]]]
+            Same key structure, but each innermost value is λ
+            (rounded integer Poisson intensity).
     """
-    # probability validation 
     if not (0.0 < prob <= 1.0):
         raise ValueError("prob must be in the interval (0, 1]")
 
-    lambdas: Dict[int, Dict[int, np.ndarray]] = {}
+    lambdas: Dict[int, Dict[str, Dict[str, int]]] = {}
 
-    for hub_id, day_dict in population_distribution.items():
+    for hub_id, days in population_distribution.items():
         lambdas[hub_id] = {}
-        for day, pop_vec in day_dict.items():
-            pop_vec = np.asarray(pop_vec, dtype=float)
-
-            if pop_vec.shape != (24,):
-                raise ValueError(
-                    f"population_distribution[{hub_id}][{day}] must be a 24-element vector."
-                )
-
-            # Compute λ = round(pop * prob) -> int array, non‑negative
-            lam_vec = np.rint(pop_vec * prob).astype(int)
-            lambdas[hub_id][day] = lam_vec
-
+        for day, hours in days.items():
+            lambdas[hub_id][day] = {}
+            for hour, pop in hours.items():
+                lam = int(round(min(pop * prob, cap)))  # Apply min rule
+                lambdas[hub_id][day][hour] = lam
     return lambdas
 
+
+def write_converted_population_file(data: Dict[int, Dict[str, Dict[str, int]]], filename: str = "converted_population.py"):
+    """
+    Write the converted population dictionary to a Python file in
+    the same style as population_distribution.
+    """
+    pretty_str = json.dumps(data, indent=4)
+
+    # Fix JSON quirks: remove quotes from top-level integer keys
+    lines = pretty_str.splitlines()
+    new_lines = []
+    for line in lines:
+        if line.strip().startswith('"') and line.strip()[1].isdigit():
+            line = line.replace('"', '', 1)  # remove first quote
+            line = line.replace('":', ':', 1)  # remove quote before colon
+        new_lines.append(line)
+    formatted_output = "\n".join(new_lines)
+
+    with open(filename, "w") as f:
+        f.write("converted_population = ")
+        f.write(formatted_output)
+
+    print(f"Formatted converted_population has been written to {filename}")
+
+
 if __name__ == "__main__":
-    print(hourly_lambdas(population_distribution, 0.15)[0][0])
+    combined_result: Dict[int, Dict[str, Dict[str, int]]] = {}
+
+    for hub_id, data in population_distribution.items():
+        if hub_id in [0, 1, 2, 8]:
+            prob = 0.05
+        else:
+            prob = 0.03
+        hub_result = hourly_lambdas({hub_id: data}, prob, cap=5)
+        combined_result[hub_id] = hub_result[hub_id]
+
+    # Write combined result to file
+    write_converted_population_file(combined_result)

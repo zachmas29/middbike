@@ -15,6 +15,7 @@ def extract_size(size_dictionary, hub, day, t):
 
     return size
 
+
 def utility(source, destination, size_dictionary, day, hour, beta1, beta2, lnSize, elevation_matrix, travel_matrix):
     travel_time = travel_matrix[int(source)][int(destination)]
     elevation = elevation_matrix[int(source)][int(destination)]

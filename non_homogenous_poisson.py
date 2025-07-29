@@ -2,11 +2,14 @@ import numpy as np
 from typing import Sequence
 from hourly_lambdas import hourly_lambdas
 from testdata import population_distribution
+from typing import Optional
+
+
 
 def nhpp(
     hourly_lambdas: Sequence[int],
     *,
-    seed: int | None = None
+    seed: Optional[int] = None
 ) -> np.ndarray:
     """
     Simulate one 24-hour day of requests as a non-homogeneous Poisson
@@ -50,7 +53,12 @@ def nhpp(
             events.append(t)
         t += rng.exponential(1 / lam_max)      # next candidate
 
-    return np.asarray(events)
+    return np.sort(np.asarray(events))
 
 if __name__ == "__main__":
-    print(nhpp(hourly_lambdas(population_distribution, 0.15)[1][1]))
+    lambdas_dict = hourly_lambdas(population_distribution, 0.15)
+    hub = 1
+    day = "M"
+    hourly_values = [lambdas_dict[hub][day][str(h)] for h in range(24)]
+    print(f"Hourly lambdas for hub {hub}, day {day}:", hourly_values)
+    print("Simulated event times:", nhpp(hourly_values))

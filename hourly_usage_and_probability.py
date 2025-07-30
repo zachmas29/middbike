@@ -1,8 +1,7 @@
 import numpy as np
-from constants import size_dictionary
+from testdata import size_dictionary
 from constants import travel_time
 from constants import elevation_matrix
-import random
 
 def extract_size(size_dictionary, hub, day, t):
     hour = str(t)
@@ -40,9 +39,9 @@ if __name__ == "__main__":
     destination = '3'
     day = 'T'
     hour = '11'
-    beta1 = .04
-    beta2 = .05
-    lnSize = .003
+    beta1 = .01
+    beta2 = .01
+    lnSize = .025
 
     #test case
     p = probability(source, destination, size_dictionary, day, str(hour), beta1, beta2, lnSize, elevation_matrix, travel_time)

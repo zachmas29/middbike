@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Dict
-from testdata import population_distribution
+from testdata import size_dictionary
 import json
 
 
@@ -69,7 +69,7 @@ def write_converted_population_file(data: Dict[int, Dict[str, Dict[str, int]]], 
 if __name__ == "__main__":
     combined_result: Dict[int, Dict[str, Dict[str, int]]] = {}
 
-    for hub_id, data in population_distribution.items():
+    for hub_id, data in size_dictionary.items():
         if hub_id in [0, 1, 2, 8]:
             prob = 0.05
         else:

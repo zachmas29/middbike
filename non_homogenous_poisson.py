@@ -1,16 +1,13 @@
 import numpy as np
-from typing import Sequence
+from typing import Dict, Optional, Tuple
 from hourly_lambdas import hourly_lambdas
-from testdata import population_distribution
-from typing import Optional
-
-
+from converted_population import converted_population
 
 def nhpp(
-    hourly_lambdas: Sequence[int],
+    raw_hourly_lambdas: Dict[int, int],
     *,
     seed: Optional[int] = None
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Simulate one 24-hour day of requests as a non-homogeneous Poisson
     process (NHPP) using Lewis-Shedler thinning
@@ -25,6 +22,8 @@ def nhpp(
     Sorted array of event times (floats) in fractional hours between 0 and 24
     """
     # validate hourly_lambdas
+    hourly_lambdas = list(raw_hourly_lambdas.values())
+
     if len(hourly_lambdas) != 24:
         raise ValueError("hourly_lambdas must contain exactly 24 values")
 
@@ -53,12 +52,10 @@ def nhpp(
             events.append(t)
         t += rng.exponential(1 / lam_max)      # next candidate
 
-    return np.sort(np.asarray(events))
+    return np.array(hourly_lambdas), np.sort(np.asarray(events))
 
 if __name__ == "__main__":
-    lambdas_dict = hourly_lambdas(population_distribution, 0.15)
-    hub = 1
-    day = "M"
-    hourly_values = [lambdas_dict[hub][day][str(h)] for h in range(24)]
-    print(f"Hourly lambdas for hub {hub}, day {day}:", hourly_values)
-    print("Simulated event times:", nhpp(hourly_values))
+    dist = nhpp(converted_population[1]["M"])
+    print(len(dist))
+    print(dist)
+    

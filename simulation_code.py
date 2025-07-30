@@ -92,25 +92,28 @@ def simulation(
                 
             no_parking_events[hour] += 1
 
-            candidate = None
-            for offset in range(1, num_hubs):
-                for new_hub in (dest - offset, dest + offset):
-                    if 0 <= new_hub < num_hubs:
-                        candidate = new_hub
-                        break
-                if candidate is not None:
+            # sort edges so that no-parking events go to nearest hub
+            candidates = sorted(
+                (v for v in range(num_hubs) if v != dest),
+                key=lambda v: G.edges[dest, v]["time"]
+            )
+
+            chosen_hub = None
+            extra_time = 0
+            for v in candidates:
+                if bike_stock[v] < max_bikes_per_hub:
+                    chosen_hub = v
+                    extra_time = G.edges[dest, v]["time"]
                     break
             
-            if candidate is None:
+            if chosen_hub is None:
                 req.minutes_left = 60
                 on_road.append(req)
-                continue
-
-            extra_time = int(G.edges[dest, candidate]["time"])
-            req.dest = candidate
-            req.minutes_left = extra_time
-            on_road.append(req)
-                    
+            else:
+                req.dest = chosen_hub
+                req._minutes_left = extra_time
+                on_road.append(req)
+       
         in_transit = on_road
 
         # process rental requests that occur during this hour

@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import NDArray
 from typing import Dict, Optional, List, Tuple
 from hourly_lambdas import hourly_lambdas
 from converted_population import converted_population
@@ -54,7 +55,8 @@ def nhp(
 
     return np.sort(np.asarray(events))
 
-def bin_events_by_hour(event_times: List[float], T: int) -> np.ndarray[int]:
+
+def bin_events_by_hour(event_times: List[float], T: int) -> NDArray[np.int_]:
     """
     Bins continuous-time events into hourly counts.
     params:

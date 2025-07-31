@@ -131,7 +131,11 @@ def simulation(
 
                 # successful checkout
                 bike_stock[hub] -= 1
-                dest = rng.choice(num_hubs, p=possibilities[hub][hour]) # assign destination based on probability array
+                p = possibilities[hub][hour]  # missing self-loop
+                p = np.array(p, dtype=float)
+                p = np.insert(p, hub, 0.0)
+                p = p / p.sum() if p.sum() > 0 else np.full(num_hubs, 1 / num_hubs)
+                dest = rng.choice(num_hubs, p=p) #chat says to nomalize it
                 req.dest = dest
                 #trip duration from edge attribute in G
                 if hub == dest:

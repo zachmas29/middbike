@@ -1,4 +1,5 @@
 from typing import Dict, Tuple, List
+from numpy.typing import NDArray
 import numpy as np
 from converted_population import converted_population
 from testdata import size_dictionary
@@ -53,6 +54,8 @@ if __name__ == "__main__":
     timestamps = distribution[1]
     probs = build_probabilities(size_dictionary, 0.25, 0.25, 0.75, "M", 10)
     graph = code.build_complete_digraph(travel_time)
-    print(code.simulation(graph, poisson, probs))
-    print(timestamps)
+    no_bike, no_parking, requests = code.simulation(graph, poisson, probs)
+    print(no_bike)
+    print(no_parking)
+    
     

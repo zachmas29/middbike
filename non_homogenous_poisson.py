@@ -66,9 +66,7 @@ def bin_events_by_hour(event_times: List[float], T: int) -> NDArray[np.int_]:
     """
     hourly_bins = np.zeros(T, dtype=int)
     for time in event_times:
-        hour = int(time % 24) #find hour of event in the day
-        hourly_bins[hour] += 1 #adds a recorded event to each hour slot
-        hour = int(time % T)
+        hour = int(time) % T
         hourly_bins[hour] += 1
     return hourly_bins
 

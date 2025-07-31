@@ -73,7 +73,7 @@ if __name__ == "__main__":
         if hub_id in [0, 1, 2, 8]:
             prob = 0.05
         else:
-            prob = 0.03
+            prob = 0.04
         hub_result = hourly_lambdas({hub_id: data}, prob, cap=5)
         combined_result[hub_id] = hub_result[hub_id]
 

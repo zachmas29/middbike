@@ -24,7 +24,7 @@ def build_complete_digraph(travel_time: np.ndarray) -> nx.DiGraph:
 def simulation(
         G: nx.DiGraph,
         distribution: Dict[int, np.ndarray],
-        possibilities: Dict[int, List[float]],
+        possibilities: Dict[int, Dict[str, np.ndarray]],
         *,
         max_bikes_per_hub: int = 10,
         initial_bikes_per_hub: int = 5,
@@ -131,9 +131,11 @@ def simulation(
 
                 # successful checkout
                 bike_stock[hub] -= 1
-                dest = rng.choice(num_hubs, p=possibilities[hub]) # assign destination based on probability array
+                dest = rng.choice(num_hubs, p=possibilities[hub][hour]) # assign destination based on probability array
                 req.dest = dest
                 #trip duration from edge attribute in G
+                if hub == dest:
+                    raise ValueError(f"Self-loop trip requested from hub {hub} to itself, which is invalid.")
                 req.minutes_left = int(G.edges[hub, dest]["time"])
                 req.success = True
                 in_transit.append(req)

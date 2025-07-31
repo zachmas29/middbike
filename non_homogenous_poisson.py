@@ -1,13 +1,13 @@
 import numpy as np
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, List, Tuple
 from hourly_lambdas import hourly_lambdas
 from converted_population import converted_population
 
-def nhpp(
+def nhp(
     raw_hourly_lambdas: Dict[int, int],
     *,
     seed: Optional[int] = None
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray:
     """
     Simulate one 24-hour day of requests as a non-homogeneous Poisson
     process (NHPP) using Lewis-Shedler thinning
@@ -52,10 +52,27 @@ def nhpp(
             events.append(t)
         t += rng.exponential(1 / lam_max)      # next candidate
 
-    return np.array(hourly_lambdas), np.sort(np.asarray(events))
+    return np.sort(np.asarray(events))
+
+def bin_events_by_hour(event_times: List[float], T: int) -> np.ndarray[int]:
+    """
+    Bins continuous-time events into hourly counts.
+    params:
+        event_times: list of nonhomogenous times in which a bike was requested
+    returns:
+        hourly_bins: slots of hours on the clock, each with the number of requests that happened within that hour
+    """
+    hourly_bins = np.zeros(T, dtype=int)
+    for time in event_times:
+        hour = int(time % 24) #find hour of event in the day
+        hourly_bins[hour] += 1 #adds a recorded event to each hour slot
+        hour = int(time % T)
+        hourly_bins[hour] += 1
+    return hourly_bins
 
 if __name__ == "__main__":
-    dist = nhpp(converted_population[1]["M"])
+    dist = nhp(converted_population[1]["M"])
+    print(bin_events_by_hour(dist, 24))
     print(len(dist))
     print(dist)
     

@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 from typing import Dict, Optional, List, Tuple
+import matplotlib.pyplot as plt
 from hourly_lambdas import hourly_lambdas
 from converted_population import converted_population
 
@@ -22,9 +23,10 @@ def nhp(
     -------
     Sorted array of event times (floats) in fractional hours between 0 and 24
     """
+
     # validate hourly_lambdas
     hourly_lambdas = list(raw_hourly_lambdas.values())
-
+    print(hourly_lambdas)
     if len(hourly_lambdas) != 24:
         raise ValueError("hourly_lambdas must contain exactly 24 values")
 
@@ -70,9 +72,27 @@ def bin_events_by_hour(event_times: List[float], T: int) -> NDArray[np.int_]:
         hourly_bins[hour] += 1
     return hourly_bins
 
+
 if __name__ == "__main__":
-    dist = nhp(converted_population[1]["M"])
-    print(bin_events_by_hour(dist, 24))
+    # Generate events using NHPP
+    dist = nhp(converted_population[2]["W"])
+    hourly_counts = bin_events_by_hour(dist, 24)
+
+    # Print debug info
+    print(hourly_counts)
     print(len(dist))
     print(dist)
-    
+
+    # ---- PLOTTING ----
+    plt.figure(figsize=(10, 4))
+
+    # Scatter plot of event timestamps
+    plt.scatter(dist, [1] * len(dist), alpha=0.6)
+    plt.title("Event Timestamps (NHPP Simulation)")
+    plt.xlabel("Time (hours)")
+    plt.ylabel("Events (flattened)")
+    plt.xlim(0, 24)
+    plt.yticks([])  # remove y-axis ticks since we flatten events
+    plt.grid(True, axis="x", linestyle="--", alpha=0.5)
+
+    plt.show()

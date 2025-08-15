@@ -1,5 +1,6 @@
 from __future__ import annotations
 import numpy as np
+import random
 import networkx as nx
 from typing import Dict, List, Tuple
 from request import Request
@@ -59,7 +60,7 @@ def simulation(
         n_req = int(distribution[hub].sum())
         bag = [Request() for _ in range(n_req)]
         req_pool[hub] = bag
-        all_requests.extend(bag)
+        all_requests.extend(bag) #add list of requests to incrementing indices of all_requests
     
     bike_stock = np.full(num_hubs, initial_bikes_per_hub, dtype = int) # 10-element array, no. of bikes at each hub
     
@@ -89,8 +90,9 @@ def simulation(
             if bike_stock[dest] < max_bikes_per_hub:
                 bike_stock[dest] += 1
                 continue
-                
-            no_parking_events[hour] += 1
+            
+            else:
+                no_parking_events[hour] += 1
 
             # sort edges so that no-parking events go to nearest hub
             candidates = sorted(
@@ -133,18 +135,16 @@ def simulation(
                 bike_stock[hub] -= 1
                 p = possibilities[hub][hour]  # missing self-loop
                 p = np.array(p, dtype=float)
-                p = np.insert(p, hub, 0.0)
                 p = p / p.sum() if p.sum() > 0 else np.full(num_hubs, 1 / num_hubs)
                 dest = rng.choice(num_hubs, p=p) #chat says to nomalize it
                 req.dest = dest
                 #trip duration from edge attribute in G
                 if hub == dest:
-                    raise ValueError(f"Self-loop trip requested from hub {hub} to itself, which is invalid.")
+                    continue
+                    # raise ValueError(f"Self-loop trip requested from hub {hub} to itself, which is invalid.")
                 req.minutes_left = int(G.edges[hub, dest]["time"])
                 req.success = True
                 in_transit.append(req)
     
 
     return no_bike_events, no_parking_events, all_requests
-
-    

@@ -1,5 +1,5 @@
 # middbike
-Potential bikeshare program in Middlebury
+Co-Authors, Sherman Liu and Zach Okayli Masaryk. Potential bikeshare program in Middlebury
 
 # Simulation Attempt One
 
